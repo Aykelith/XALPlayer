@@ -40,6 +40,10 @@ private:
     bool m_isPlaying;
 
     PopupMessageManager m_popupMessageManager;
+
+    sf::Time m_timeToWait;
+    sf::Time m_timeToWaitElapsed;
+    bool m_needToWait;
 };
 
 }

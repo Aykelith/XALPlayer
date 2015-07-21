@@ -7,6 +7,7 @@ namespace xal
 MovieState::MovieState(StateMachine& machine, bool replace)
 : State {machine, replace}
 , m_isPlaying {false}
+, m_needToWait {false}
 {
     m_timePerFrame = sf::seconds(1.0f / 60.0f); // Number of frames per second
 
@@ -72,6 +73,16 @@ void MovieState::update()
             }
         }
 
+        if (m_needToWait && m_timeToWaitElapsed < m_timeToWait)
+        {
+            m_timeToWaitElapsed += m_timePerFrame;
+        }
+        else
+        {
+            m_needToWait = false;
+            m_movie.play();
+        }
+
         m_movie.update();
 
         sf::Packet packet;
@@ -116,7 +127,18 @@ void MovieState::update()
                 time_t t = time(NULL);
                 struct tm *tmp = gmtime(&t);
 
-                m_machine.sendPacket(sf::Packet() << "CHECKTIME" << tmp->tm_hour << tmp->tm_min << tmp->tm_sec << m_movie.getPlayingOffset().asMilliseconds(), sf::seconds(3));
+                m_machine.sendData(sf::Packet() << "CHECKTIME" << tmp->tm_hour << tmp->tm_min << tmp->tm_sec << m_movie.getPlayingOffset().asMilliseconds(), sf::seconds(3));
+            }
+            else if (command == "WAIT")
+            {
+                m_movie.pause();
+                m_needToWait = true;
+
+                sf::Int32 millisecondsToWait;
+                packet >> millisecondsToWait;
+
+                m_timeToWait = sf::milliseconds(millisecondsToWait);
+                m_timeToWaitElapsed = sf::Time::Zero;
             }
             else if (command == "MESSAGE")
             {
@@ -126,7 +148,7 @@ void MovieState::update()
                 m_popupMessageManager.add(message);
             }
         }
-
+        
         m_popupMessageManager.update(m_timePerFrame);
 
 		m_timeSinceLastUpdate -= m_timePerFrame;

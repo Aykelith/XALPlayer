@@ -16,7 +16,7 @@ Server::Server()
     std::cout << port << "\n";
 #endif
 
-    std::cout << sf::IpAddress::getLocalAddress() << "\n";
+    std::cout << sf::IpAddress::getPublicAddress() << "\n";
 
     // Create a socket to listen to new connections
     m_listener.listen(port);
@@ -26,7 +26,7 @@ Server::Server()
 
     m_listener.setBlocking(false);
 
-    m_secondsUntilCheck = 300;
+    m_secondsUntilCheck = 120;
 }
 
 void Server::run()
@@ -205,7 +205,33 @@ bool Server::checkAllReady()
 
 void Server::checkTime()
 {
+    sf::Int32 smallestTime = m_checkTimes.front().movieTime;
+    for (std::size_t i=1; i<m_checkTimes.size(); ++i)
+    {
+        if (smallestTime > m_checkTimes[i].movieTime)
+        {
+            smallestTime = m_checkTimes[i].movieTime;
+        }
+    }
 
+    for (std::size_t i=1; i<m_checkTimes.size(); ++i)
+    {
+        auto difference = m_checkTimes[i].movieTime - smallestTime;
+        if (difference > 50)
+        {
+            sendPacket(sf::Packet() << "WAIT" << difference - 10, *findSocket(m_checkTimes[i].username));
+        }
+    }
+}
+
+sf::TcpSocket* Server::findSocket(const std::string& username)
+{
+    for (auto it = m_clients.begin(); it != m_clients.end(); ++it)
+    {
+        if (it->second == username)
+            return it->first;
+    }
+    return nullptr;
 }
 
 }

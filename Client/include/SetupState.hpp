@@ -11,6 +11,8 @@
 #include "State.hpp"
 #include "MovieState.hpp"
 
+#include "ConfigServerWindow.hpp"
+
 #ifdef DEBUG
     #include <fstream>
 #endif
@@ -36,6 +38,8 @@ private:
 
 private:
     tgui::Gui m_gui;
+
+    ConfigServerWindow* m_configServerWindow;
 };
 
 }

@@ -6,6 +6,7 @@ namespace xal
 
 SetupState::SetupState(StateMachine& machine, bool replace)
 : State {machine, replace}
+, m_configServerWindow { nullptr }
 {
     m_timePerFrame = sf::seconds(1.0f / 60.0f); // Number of frames per second
 
@@ -107,8 +108,16 @@ SetupState::SetupState(StateMachine& machine, bool replace)
             }
         }
     });
-
     m_gui.add(connectButton);
+
+    auto createServerButton = tgui::Button::create("data/Black.conf");
+    createServerButton->setText("Create server");
+    createServerButton->setSize(150, 40);
+    createServerButton->setPosition(movieEditBox->getPosition().x + movieEditBox->getSize().x - 150, movieEditBox->getPosition().y + movieEditBox->getSize().y + 20);
+    createServerButton->connect("Pressed", [=](){
+        m_configServerWindow = new ConfigServerWindow();
+    });
+    m_gui.add(createServerButton);
 
     m_window.create({(unsigned int)(movieEditBox->getPosition().x + movieEditBox->getSize().x + 20), (unsigned int)(connectButton->getPosition().y + connectButton->getSize().y + 20)}, "XALPlayer - Setup");
     m_gui.setWindow(m_window);
@@ -142,8 +151,10 @@ void SetupState::update()
                 m_machine.quit();
             }
 
-            m_gui.handleEvent(event);
+            //m_gui.handleEvent(event);
         }
+
+        if (m_configServerWindow) m_configServerWindow->update();
 
 		m_timeSinceLastUpdate -= m_timePerFrame;
     }
@@ -153,9 +164,11 @@ void SetupState::draw()
 {
     m_window.clear();
 
-    m_gui.draw();
+    //m_gui.draw();
 
     m_window.display();
+
+    if (m_configServerWindow) m_configServerWindow->draw();
 }
 
 void SetupState::showErrorMessage(const std::string& error)

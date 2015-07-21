@@ -31,6 +31,8 @@ private:
 
     void checkTime();
 
+    sf::TcpSocket* findSocket(const std::string& username);
+
 private:
     sf::TcpListener m_listener;
     std::list<std::pair<sf::TcpSocket*, std::string>> m_clients;
