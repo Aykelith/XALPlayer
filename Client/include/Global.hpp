@@ -1,6 +1,9 @@
 #ifndef XAL_GLOBAL_HPP
 #define XAL_GLOBAL_HPP
 
+typedef unsigned long ulong;
+typedef unsigned int  uint;
+
 #define DEBUG
 
 #define LOG 0

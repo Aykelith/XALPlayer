@@ -23,14 +23,19 @@ Server::Server()
 
     // Add the m_listener to the m_selector
     m_selector.add(m_listener);
+
+    m_listener.setBlocking(false);
+
+    m_secondsUntilCheck = 300;
 }
 
 void Server::run()
 {
+    m_clock.restart();
     while (true)
     {
         // Make the m_selector wait for data on any socket
-        if (m_selector.wait())
+        if (m_selector.wait(sf::seconds(60)))
         {
             // Test the m_listener
             if (m_selector.isReady(m_listener))
@@ -69,6 +74,8 @@ void Server::run()
                             int result = executeCommand(packet, client, it->second);
                             if (result == 1)
                             {
+                                std::cout << "[CONNECTION]The user \"" << it->second << "\":" << it->first->getRemoteAddress() << ":" << it->first->getRemotePort() << " has disconnected\n";
+
                                 it = m_clients.erase(it);
                                 if (it == m_clients.end())
                                     break;
@@ -87,6 +94,14 @@ void Server::run()
                 }
             }
         }
+
+        if (m_clock.getElapsedTime().asSeconds() > m_secondsUntilCheck)
+        {
+            m_checkTimes.clear();
+            sendPacketToAll(sf::Packet() << "CHECKTIME");
+            m_clock.restart();
+        }
+
     }
 }
 
@@ -119,6 +134,19 @@ int Server::executeCommand(sf::Packet& packet, sf::TcpSocket& client, const std:
     {
         sendPacketToAll(sf::Packet() << "PAUSE" << username);
     }
+    else if (command == "CHECKTIME")
+    {
+        int hour, min, sec;
+        sf::Int32 movieTime;
+
+        packet >> hour >> min >> sec >> movieTime;
+        m_checkTimes.push_back({ {hour, min, sec}, movieTime, username });
+
+        if (m_checkTimes.size() == m_clients.size())
+        {
+            checkTime();
+        }
+    }
     else if (command == "USERNAME")
     {
         return 2;
@@ -139,7 +167,8 @@ void Server::sendPacket(sf::Packet &packet, sf::TcpSocket& client)
     }
     else
     {
-        std::cout << "[EROARE]Can't sent packet!\n";
+        auto errorType = client.send(packet);
+        std::cout << "[ERROR]Can't sent packet! Error:" << errorType << "\n";
     }
 }
 
@@ -172,6 +201,11 @@ bool Server::checkAllReady()
     }
 
     return true;
+}
+
+void Server::checkTime()
+{
+
 }
 
 }

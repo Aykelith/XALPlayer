@@ -12,6 +12,7 @@ MovieState::MovieState(StateMachine& machine, bool replace)
 
     m_gui.setGlobalFont("data/DejaVuSans.ttf");
     m_font.loadFromFile("data/DejaVuSans.ttf");
+    m_popupMessageManager.setFont(m_font);
 
     m_window.create(sf::VideoMode::getFullscreenModes().at(0), m_machine.getMoviePath());
 
@@ -84,7 +85,7 @@ void MovieState::update()
                 std::string username;
                 packet >> username;
 
-                showPopupMessage(username + " has connected");
+                m_popupMessageManager.add(username + " has connected");
             }
             else if (command == "PLAY")
             {
@@ -93,7 +94,7 @@ void MovieState::update()
 
                 if (username == m_machine.getUsername()) username = "You";
 
-                showPopupMessage(username + " played the movie");
+                m_popupMessageManager.add(username + " played the movie");
 
                 m_isPlaying = true;
                 m_movie.play();
@@ -105,34 +106,28 @@ void MovieState::update()
 
                 if (username == m_machine.getUsername()) username = "You";
 
-                showPopupMessage(username + " paused the movie");
+                m_popupMessageManager.add(username + " paused the movie");
 
                 m_isPlaying = false;
                 m_movie.pause();
+            }
+            else if (command == "CHECKTIME")
+            {
+                time_t t = time(NULL);
+                struct tm *tmp = gmtime(&t);
+
+                m_machine.sendPacket(sf::Packet() << "CHECKTIME" << tmp->tm_hour << tmp->tm_min << tmp->tm_sec << m_movie.getPlayingOffset().asMilliseconds(), sf::seconds(3));
             }
             else if (command == "MESSAGE")
             {
                 std::string message;
                 packet >> message;
 
-                showPopupMessage(message);
+                m_popupMessageManager.add(message);
             }
         }
 
-        if (m_popupMessage)
-        {
-            m_popupMessage->elapsedTime += m_timePerFrame;
-
-            if (m_popupMessage->elapsedTime > m_popupMessage->maxTime)
-            {
-                m_popupMessage = nullptr;
-            }
-            else if (m_popupMessage->elapsedTime > m_popupMessage->maxTime/2.f)
-            {
-                auto alpha = (m_popupMessage->elapsedTime.asMilliseconds() - m_popupMessage->maxTime.asMilliseconds()/2) / m_popupMessage->maxTime.asMilliseconds()/2 * 255;
-                m_popupMessage->text.setColor(sf::Color(0,255,0,alpha));
-            }
-        }
+        m_popupMessageManager.update(m_timePerFrame);
 
 		m_timeSinceLastUpdate -= m_timePerFrame;
     }
@@ -144,22 +139,9 @@ void MovieState::draw()
 
     m_window.draw(m_movie);
 
-    if (m_popupMessage) m_window.draw(m_popupMessage->text);
+    m_window.draw(m_popupMessageManager);
 
     m_window.display();
-}
-
-void MovieState::showPopupMessage(const std::string& message)
-{
-    m_popupMessage = new PopupMessage;
-    m_popupMessage->text.setFont(m_font);
-    m_popupMessage->text.setCharacterSize(20);
-    m_popupMessage->text.setColor(sf::Color::Green);
-    m_popupMessage->text.setString(message);
-    m_popupMessage->text.setPosition(10,10);
-
-    m_popupMessage->maxTime = sf::seconds(4);
-    m_popupMessage->elapsedTime = sf::Time::Zero;
 }
 
 }

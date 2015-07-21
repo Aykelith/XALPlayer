@@ -3,4 +3,7 @@
 
 #define DEBUG
 
+typedef unsigned long ulong;
+typedef unsigned int  uint;
+
 #endif

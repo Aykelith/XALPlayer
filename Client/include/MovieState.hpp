@@ -6,6 +6,11 @@
 #include <SFML/Graphics.hpp>
 #include <sfeMovie/Movie.hpp>
 #include <TGUI/TGUI.hpp>
+#include <ctime>
+#include <cstdio>
+#include <cstdlib>
+
+#include "PopupMessageManager.hpp"
 
 #include "State.hpp"
 
@@ -26,7 +31,6 @@ public:
 	void draw();
 
 private:
-    void showPopupMessage(const std::string& message);
 
 private:
     tgui::Gui m_gui;
@@ -35,13 +39,7 @@ private:
     sfe::Movie m_movie;
     bool m_isPlaying;
 
-    struct PopupMessage
-    {
-        sf::Text text;
-        sf::Time elapsedTime;
-        sf::Time maxTime;
-    };
-    PopupMessage* m_popupMessage;
+    PopupMessageManager m_popupMessageManager;
 };
 
 }

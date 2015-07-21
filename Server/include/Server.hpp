@@ -29,12 +29,20 @@ private:
 
     bool checkAllReady();
 
+    void checkTime();
+
 private:
     sf::TcpListener m_listener;
     std::list<std::pair<sf::TcpSocket*, std::string>> m_clients;
     sf::SocketSelector m_selector;
 
     unsigned int m_movieLength;
+
+    sf::Clock m_clock;
+    unsigned int m_secondsUntilCheck;
+    struct ActualTime { int hour; int min; int sec; };
+    struct CheckTime { ActualTime actualTime; sf::Int32 movieTime; std::string username; };
+    std::vector<CheckTime> m_checkTimes;
 
 };
 
